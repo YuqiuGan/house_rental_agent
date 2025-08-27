@@ -1,0 +1,18 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Virtual environment
+.venv/
+env/
+
+# Data
+data/
+*.png
+*.jpg
+
+# OS files
+.DS_Store
