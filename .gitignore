@@ -17,3 +17,6 @@ data/
 
 # OS files
 .DS_Store
+
+# evn files
+.env

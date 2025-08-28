@@ -3,14 +3,11 @@ from zoneinfo import ZoneInfo
 import requests
 import datetime as dt
 import os
-import pandas as pd
+import re
 from langsmith import Client
+from langchain.tools import BaseTool, StructuredTool, tool
+from src.settings import GOOGLE_MAP_API_KEY, GOOGLE_PIC_SAVING_DIR
 
-
-
-
-GOOGLE_API_KEY = "AIzaSyBfOCUHeG0xHKNa-aN013Q-TSs7dI6M_y4"
-GOOGLE_PIC_SAVING_DIR = "/Users/yuqiugan/Desktop/Personal_DS_Projects/house_rental_agent/data/Google_route"
 
 def get_departure_time(timeZone_str="America/New_York", departure_time_hour=8, departure_time_minute=0):
 
@@ -39,7 +36,7 @@ def best_transit_route(origin, destination, mode: str = "transit", tz_name="Amer
         "mode": mode,
         "alternatives": "true",
         "departure_time": unix_ts,
-        "key": GOOGLE_API_KEY,
+        "key": GOOGLE_MAP_API_KEY,
     }
 
     r = requests.get("https://maps.googleapis.com/maps/api/directions/json", params=params, timeout=30)
@@ -58,7 +55,7 @@ def best_transit_route(origin, destination, mode: str = "transit", tz_name="Amer
     best_route = min(data["routes"], key=route_key)
     return best_route
 
-def static_map_with_route(route, path_color="0x0066FFE6", path_weight=6, maptype="roadmap", w=1000, h=700, origin_name='Default'):
+def static_map_with_route(route, origin_name='Default', path_color="0x0066FFE6", path_weight=6, maptype="roadmap", w=1000, h=700):
     base = "https://maps.googleapis.com/maps/api/staticmap"
 
     # create the path first
@@ -116,7 +113,7 @@ def static_map_with_route(route, path_color="0x0066FFE6", path_weight=6, maptype
     # use google's autofit feature
     parts.append(f"visible={origin['lat']},{origin['lng']}|{destination['lat']},{destination['lng']}")
 
-    parts.append(f"key={GOOGLE_API_KEY}")
+    parts.append(f"key={GOOGLE_MAP_API_KEY}")
     url = base + "?" + "&".join(parts)
     
     file_name = f"{origin_name}.png"
@@ -135,7 +132,27 @@ def static_map_with_route(route, path_color="0x0066FFE6", path_weight=6, maptype
         }
     return map_result
 
-def query_google_maps(origin, destination, origin_name):
+@tool
+def query_google_maps(origin, destination, origin_name, generate_route_map=False):
+
+    """
+    Find the best public transit route between two locations using Google Maps.
+
+    Args:
+        origin (str): Starting location (address or place name).
+        destination (str): Destination location (address or place name).
+        origin_name (str): Label used to name the saved map image (if generated).
+        generate_route_map (bool, optional): Default value is False. If True, saves a static map PNG of the route.
+
+    Returns:
+        dict: {
+            "duration_text": Trip duration in readable text (e.g. "25 mins"),
+            "distance_text": Distance in readable text (e.g. "3.1 km"),
+            "steps": List of steps (travel_mode, instructions, transit details),
+            "map_result": Either a saved map path or "No route map generated"
+        }
+
+    """
 
     best_route = best_transit_route(origin, destination)
     leg = best_route["legs"][0] # if there is no waypoint
@@ -143,7 +160,13 @@ def query_google_maps(origin, destination, origin_name):
     duration_seconds = leg["duration"]["value"]
     distance_text = leg["distance"]["text"]
     steps = [(s["travel_mode"], s.get("html_instructions", ""), s.get("transit_details", {})) for s in leg["steps"]]
-    map_result = static_map_with_route(best_route, origin_name)
+
+    if generate_route_map:
+        safe_name = re.sub(r'[^A-Za-z0-9._-]+', '_', origin_name).strip('_')
+        map_result = static_map_with_route(best_route, origin_name=safe_name)
+        # map_result = static_map_with_route(best_route, origin_name=origin_name)
+    else:
+        map_result = "No route map generated"
 
     return {
         "duration_text": duration_text,
