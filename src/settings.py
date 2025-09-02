@@ -14,3 +14,6 @@ GOOGLE_PIC_SAVING_DIR = os.getenv(
     "GOOGLE_PIC_SAVING_DIR",
     os.path.join(PROJECT_ROOT, "data", "Google_route")
 )
+
+ZILLOW_DATASET_ID = os.getenv("ZILLOW_DATASET_ID")
+BRIGHTDATA_API_KEY = os.getenv("BRIGHTDATA_API_KEY")
