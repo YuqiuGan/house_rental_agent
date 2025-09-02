@@ -1,0 +1,79 @@
+BRIGHTDATA_LISTING_SNAPSHOT_KEYS:
+  - zpid
+  - address
+  - bedrooms
+  - bathrooms
+  - price
+  - yearBuilt
+  - listingDataSource
+  - longitude
+  - latitude
+  - homeType
+  - livingArea
+  - livingAreaValue
+  - rentZestimate
+  - photoCount
+  - hdpUrl
+  - hasApprovedThirdPartyVirtualTourUrl
+  - streetViewTileImageUrlMediumLatLong
+  - description
+  - priceHistory
+  - nearbyHomes
+  - isInstantOfferEnabled
+  - isRentalListingOffMarket
+  - isOffMarket
+  - daysOnZillow
+  - days_on_zillow
+  - virtualTourUrl
+  - photos
+  - utilities
+  - interior
+  - overview
+  - is_listed_by_management_company
+  - interior_full
+  - property
+  - tags
+  - unit_amenities
+  - availability_date
+  - getting_around_scores
+  - getting_around
+
+BRIGHTDATA_LISTING_SNAPSHOT_DESCP:
+  zpid: "A unique identifier for the property listing on Zillow"
+  address: "The full address of the property, a dictionary including city, streetAddress, zipcode, state"
+  bedrooms: "The number of bedrooms in the property"
+  bathrooms: "The number of bathrooms in the property"
+  price: "The price of the property"
+  yearBuilt: "The year in which the property was built"
+  listingDataSource: "The source of the listing data"
+  longitude: "The longitude coordinate of the property"
+  latitude: "The latitude coordinate of the property"
+  homeType: "The type of the home"
+  livingArea: "The total living area of the property"
+  livingAreaValue: "The numerical value of the living area"
+  rentZestimate: "The Zillow estimate of the property's rental value"
+  photoCount: "The number of photos associated with the property listing"
+  hdpUrl: "The URL to the Home Details Page (HDP) for the property"
+  hasApprovedThirdPartyVirtualTourUrl: "Whether there is an approved third-party virtual tour (boolean)"
+  streetViewTileImageUrlMediumLatLong: "Street view tile image URL using latitude and longitude"
+  description: "A textual description or details about the property"
+  priceHistory: "Information about the price history of the property"
+  nearbyHomes: "Array of zpids of all nearby properties"
+  isInstantOfferEnabled: "Whether instant offer is enabled (boolean)"
+  isRentalListingOffMarket: "Whether the rental listing is off-market (boolean)"
+  isOffMarket: "Indicates if the rental listing is off-market"
+  daysOnZillow: "The number of days the property has been listed on Zillow"
+  days_on_zillow: "The number of days the property has been listed on Zillow"
+  virtualTourUrl: "URL for a virtual tour of the property"
+  photos: "Information about photos associated with the property"
+  utilities: "General information about utilities"
+  interior: "Description of the property interior"
+  overview: "Listing meta details: days posted, number of views, etc."
+  is_listed_by_management_company: "Whether the listing is managed by a management company"
+  interior_full: "All interior information of the property"
+  property: "All property information from property section"
+  tags: "Tags of this property"
+  unit_amenities: "Unit amenities"
+  availability_date: "Availability date"
+  getting_around_scores: "The getting around metrics scores"
+  getting_around: "Getting around scores"
