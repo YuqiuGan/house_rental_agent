@@ -5,9 +5,10 @@ import datetime as dt
 import os
 import re
 import time
+import json
 from langsmith import Client
 from langchain.tools import BaseTool, StructuredTool, tool
-from src.settings import ZILLOW_DATASET_ID, BRIGHTDATA_API_KEY, BRIGHTDATA_LISTING_SNAPSHOT_KEYS, BRIGHTDATA_LISTING_SNAPSHOT_DESCP
+from src.settings import ZILLOW_DATASET_ID, BRIGHTDATA_API_KEY, BRIGHTDATA_LISTING_SNAPSHOT_KEYS, BRIGHTDATA_LISTING_SNAPSHOT_DESCP, BRIGHTDATA_SNAPSHOT_SAVING_PATH
 
 @tool
 def submit_zillow_query_via_brightData(location: str, listingCategory: str = "House for rent", 
@@ -76,7 +77,7 @@ def submit_zillow_query_via_brightData(location: str, listingCategory: str = "Ho
 def get_listing_info(listing_item: dict,
     selected_keys: list,
     *,
-    max_photos: int = 5,
+    max_photos: int = 15,
     max_price_history: int = 5,
     max_desc_chars: int = 800):
     
@@ -99,7 +100,7 @@ def get_listing_info(listing_item: dict,
     return out
 
 
-def process_brightdata_snapshot(snapshot_output, selected_keys, key_description, **kwargs):
+def process_brightdata_snapshot(snapshot_id, snapshot_output, selected_keys, key_description, **kwargs):
 
     if isinstance(snapshot_output, dict) and snapshot_output.get("error"):
         return {"success": False, "error_payload": snapshot_output}
@@ -107,7 +108,15 @@ def process_brightdata_snapshot(snapshot_output, selected_keys, key_description,
     if isinstance(snapshot_output, list):
         listings = [get_listing_info(item, selected_keys, **kwargs)
                     for item in snapshot_output if isinstance(item, dict)]
-        return {"success": True, "count": len(listings), "listings": listings, "schema": key_description}
+        
+        os.makedirs(BRIGHTDATA_SNAPSHOT_SAVING_PATH, exist_ok=True)
+        filename = f"{snapshot_id}.json"
+        filepath = os.path.join(BRIGHTDATA_SNAPSHOT_SAVING_PATH, filename)
+
+        with open(filepath, "w", encoding="utf-8") as f:
+            json.dump(listings, f, ensure_ascii=False, indent=2)
+
+        return {"success": True, "count": len(listings), "local_snapshot_path": filepath}
 
     return {"success": False, "error_payload": {"error": "Unexpected snapshot output type"}}
 
@@ -116,7 +125,7 @@ def process_brightdata_snapshot(snapshot_output, selected_keys, key_description,
 def retrieve_snapshot_from_brightData(snapshot_id: str, fmt="json", interval=60, max_attempts=3):
 
     """
-    Retrieve Zillow listing data from a Bright Data snapshot.
+    Retrieve Zillow listing data from a Bright Data snapshot. The snapshot data will be saved as a local file and the file name will be returned as "local_snapshot_path".
 
     Summary
     -------
@@ -141,8 +150,7 @@ def retrieve_snapshot_from_brightData(snapshot_id: str, fmt="json", interval=60,
           {
             "success": True,
             "count": <int>,
-            "listings": [ {<filtered listing dict>}, ... ],
-            "schema": { <key -> description> }
+            "local_snapshot_path": <filepath>
           }
 
         If still processing after all attempts (timeout):
@@ -179,8 +187,10 @@ def retrieve_snapshot_from_brightData(snapshot_id: str, fmt="json", interval=60,
         resp = requests.get(url, headers=RETRIEVE_HEADERS, params=params)
 
         if resp.status_code == 200:
+
+            print(f"retrieved snapshot: {snapshot_id}")
             
-            return process_brightdata_snapshot(resp.json(), BRIGHTDATA_LISTING_SNAPSHOT_KEYS, BRIGHTDATA_LISTING_SNAPSHOT_DESCP)
+            return process_brightdata_snapshot(snapshot_id, resp.json(), BRIGHTDATA_LISTING_SNAPSHOT_KEYS, BRIGHTDATA_LISTING_SNAPSHOT_DESCP)
 
         elif resp.status_code == 202:
             print(f"[{attempt+1}/{max_attempts}] Snapshot not ready, retrying in {interval}s…")
